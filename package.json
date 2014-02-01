@@ -1,0 +1,23 @@
+{
+  "name": "spelling-suggestion",
+  "version": "0.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "y"
+  },
+  "author": "Daiwei Lu",
+  "license": "MIT",
+  "dependencies": {
+    "mongodb": "~1.3.23",
+    "q": "~1.0.0",
+    "lodash": "~2.4.1"
+  },
+  "devDependencies": {
+    "chai": "~1.9.0"
+  }
+}
