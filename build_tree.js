@@ -5,7 +5,7 @@ var getCollection = require('./lib/getCollection.js');
 var levenshtein = require('./lib/levenshtein.js');
 var Readline = require('./lib/Readline.js');
 var findParent = require('./lib/findParent.js')
-var Q = require('q'); // Use Q to avoid maximum callstack error in `Readline`
+var Q = require('q'); // Use Q to avoid maximum callstack error
 
 
 var file = new Readline('./word_frequency.csv');
@@ -20,7 +20,7 @@ getCollection(function(bkTree) {
 });
 
 
-// Save root (first) word
+// Save root (first, most frequent) word
 var savedRootWord = Q.defer();
 emptyCollection.promise.then(function() {
   file.nextLine(function(line) {
@@ -40,16 +40,22 @@ emptyCollection.promise.then(function() {
 });
 
 
-// Save words and build BK-Tree
+// Save words and build BK-Tree (from hight frequency to low)
 savedRootWord.promise.then(function() {
-
   (function walker() {
-    var deferred = Q.defer();
 
+    // use Q to avoid maximum callstack error
+    var deferred = Q.defer();
+    deferred.promise.then(walker);
+
+    // Save and build tree line by line
     file.nextLine(function(line) {
       if (line && line.length) {
+
+        // output progress information
         console.log('Processing words => %d%',
                     Math.round(file.cursor / file.lines.length * 100));
+
         getCollection(function(bkTree) {
           var data = line.split(',');
           bkTree.insert(
@@ -62,6 +68,7 @@ savedRootWord.promise.then(function() {
                 if (err) throw err;
                 findParent(doc, root, bkTree, function(parent, dis) {
 
+                  // insert pointer to parent record of current word
                   var _set = {};
                   _set['links.'+dis] = doc._id;
                   bkTree.findAndModify(
@@ -86,7 +93,5 @@ savedRootWord.promise.then(function() {
       }
     });
 
-    deferred.promise.then(walker);
   })();
-
 });
