@@ -27,9 +27,13 @@ emptyCollection.promise.then(function() {
     if (line && line.length) {
       getCollection(function(bkTree) {
         var data = line.split(',');
-        bkTree.insert({word: data[0], freq: data[1], root: true, links: {}}, {w: 1}, function(err, doc) {
-          savedRootWord.resolve();
-        });
+        bkTree.insert(
+          {word: data[0], freq: parseInt(data[1]), root: true, links: {}},
+          {w: 1},
+          function(err, doc) {
+            savedRootWord.resolve();
+          }
+        );
       });
     }
   });
@@ -44,35 +48,40 @@ savedRootWord.promise.then(function() {
 
     file.nextLine(function(line) {
       if (line && line.length) {
-        console.log('Processing words => %d%', Math.round(file.cursor / file.lines.length * 100));
+        console.log('Processing words => %d%',
+                    Math.round(file.cursor / file.lines.length * 100));
         getCollection(function(bkTree) {
           var data = line.split(',');
           bkTree.insert(
-            {word: data[0], freq: Number(data[1]), links: {}},
+            {word: data[0], freq: parseInt(data[1]), links: {}},
             {w: 1},
             function(err, docs) {
               if (err) throw err;
               var doc = docs[0];
-
               bkTree.findOne({root: true}, function(err, root) {
                 if (err) throw err;
                 findParent(doc, root, bkTree, function(parent, dis) {
 
                   var _set = {};
                   _set['links.'+dis] = doc._id;
-                  bkTree.findAndModify({_id: parent._id}, null, {$set: _set}, {w: 1}, function(err) {
-                    if (err) throw err;
-                    deferred.resolve();
-                  });
+                  bkTree.findAndModify(
+                    {_id: parent._id},
+                    null,
+                    {$set: _set},
+                    {w: 1},
+                    function(err) {
+                      if (err) throw err;
+                      deferred.resolve();
+                    }
+                  );
 
                 });
               });
-
             }
           );
         });
       } else {
-        console.log('done');
+        console.log('Finished building indexes');
         process.exit(0);
       }
     });

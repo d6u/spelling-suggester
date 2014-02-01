@@ -1,21 +1,20 @@
 'use strict';
 
 
+var ObjectID = require('mongodb').ObjectID;
+var fs = require('fs');
+var Q = require('q'); // Use Q to avoid maximum callstack error
+
 var getCollection = require('./lib/getCollection.js');
 var levenshtein = require('./lib/levenshtein.js');
 var Readline = require('./lib/Readline.js');
-var findParent = require('./lib/findParent.js')
-var Q = require('q'); // Use Q to avoid maximum callstack error in `Readline`
-var ObjectID = require('mongodb').ObjectID;
-var _ = require('lodash');
-var fs = require('fs');
+var findParent = require('./lib/findParent.js');
 
 
-var file = new Readline('./misspelled_queries.csv');
 var maxDis = 2;
 var maxSuggestionReturned = 10000;
-var ws = fs.createWriteStream('suggest.txt');
-// suggestions.txt
+var file = new Readline('./misspelled_queries.csv');
+var ws = fs.createWriteStream('suggestions.txt');
 
 
 getCollection(function(bkTree) {
@@ -43,10 +42,10 @@ getCollection(function(bkTree) {
               var endTime = (new Date()).getTime();
               var timeUsed = endTime - startTime;
               everageTime = (everageTime * (file.cursor - 1) + timeUsed) / file.cursor;
-              console.log('#%d', file.cursor);
-              console.log('Word searched %d', wordSearched);
-              console.log('Everage time %dms', everageTime);
-              // console.log('* ' + line + ': [' + result + ']');
+              console.log('#%d, word searched %d, everage time %dms',
+                          file.cursor,
+                          wordSearched,
+                          everageTime);
               ws.write('* ' + line + ': ["' + result.join('", "') + "\"]\n");
               next();
             }
@@ -93,9 +92,10 @@ getCollection(function(bkTree) {
             compareWord(root, finishLine);
 
           } else {
-            console.log('processed all queries');
+            console.log('Processed all queries');
             console.log('Everage time %dms', everageTime);
             ws.end();
+            process.exit(0);
           }
         });
       })();
